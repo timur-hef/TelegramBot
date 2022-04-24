@@ -1,6 +1,8 @@
 import logging
 import sqlalchemy as sa
 
+from functools import wraps
+
 from auth import DATABASE
 from sqlalchemy.orm import declarative_base, Session, sessionmaker
 
@@ -17,6 +19,18 @@ def init_db():
     Base.metadata.create_all(engine)
 
 
+def provide_session(func):
+
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        s = Session()
+        func(*args, **kwargs, session=s)
+        s.commit()
+        s.close()
+
+    return wrapper
+
+
 class User(Base):
     __tablename__ = 'user_info'
 
@@ -28,53 +42,36 @@ class User(Base):
         return f"User(id={self.id}, location={self.location}, horo_sign={self.horo_sign})"
 
 
-def add_user(user_id, location=None, horo=None):
-    s = Session()
-
-    user = s.query(User).filter(User.id == user_id).first()
-    if user:
-        return
-
-    user = User(id=user_id, location=location, horo_sign=horo)
-
-    s.add(user)
-    s.commit()
-    logger.info(f'Пользователь ({user_id}) успешно добавлен')
-    return
-
-
-def update_user(user_id, location=None, horo=None):
-    s = Session()
-    user = s.query(User).filter(User.id == user_id).first()
+@provide_session
+def update_user(user_id, session=None, location=None, horo=None):
+    user = session.query(User).filter(User.id == user_id).first()
 
     if not user:
-        logger.error(f'Пользователь ({user_id}) не найден. Добавляю в БД')
-        add_user(user_id, location=location, horo_sign=horo)
-    else:
-        user.location = location if location else user.location
-        user.horo_sign = horo if horo else user.horo_sign
+        user = User(id=user_id, location=location, horo_sign=horo)
+        logger.info(f'Пользователь ({user_id}) успешно добавлен')
+        return
 
-        s.merge(user)
-        s.commit()
-        logger.info(f'Информация пользователя ({user_id}) успешно обновлена')
+    user.location = location if location else user.location
+    user.horo_sign = horo if horo else user.horo_sign
 
-    s.close()
+    session.merge(user)
+    logger.info(f'Информация пользователя ({user_id}) успешно обновлена')
+
     return
 
 
-def delete_user(user_id):
-    s = Session()
-    user = s.query(User).filter(User.id == user_id).first()
+@provide_session
+def delete_user(user_id, session=None):
+    user = session.query(User).filter(User.id == user_id).first()
 
     if not user:
         logger.error(f'Не удалось найти юзера id = {user_id}')
     else:
-        s.delete(user)
+        session.delete(user)
         logger.info(f'Информация пользователя {user_id} успешно удалена')
 
-    s.commit()
-    s.close()
     return
+
 
 
 # init_db()

@@ -5,26 +5,35 @@ import logging
 import datetime as dt
 
 from auth import WEATHER_KEY
+from database import User, provide_session
 from utils import ERROR_MESSAGE, is_cyrillic, translate, translit, alpha_2
 
 
 logger = logging.getLogger('main_bot_logger')
 
 
-def weather_info(message, bot=None):
+@provide_session
+def weather_info(message, session=None, bot=None):
     try:
-        city = message.text.split()[0].capitalize() # munich -> Munich
-        country = message.text.split()[1].capitalize()        # Россия -> Russia -> RU
-        logger.info('Ищу прогноз погоды для: {}, {}'.format(city, country))
+        user = session.query(User).filter(User.id == message.from_user.id).one()
         country_code = None
-        
-        city = translit(city) if is_cyrillic(city) else city
-        country = translate(country) if is_cyrillic(country) else country
 
-        for name in alpha_2:
-            if country in name:
-                country_code = alpha_2[name]
-                break
+        if message.text == '.':
+            user_location = json.loads(user.location)
+            city = user_location['city']
+            country_code = user_location['code']
+        else:
+            city = message.text.split()[0].capitalize() # munich -> Munich
+            country = message.text.split()[1].capitalize()        # Россия -> Russia -> RU
+            logger.info('Ищу прогноз погоды для: {}, {}'.format(city, country))
+            
+            city = translit(city) if is_cyrillic(city) else city
+            country = translate(country) if is_cyrillic(country) else country
+
+            for name in alpha_2:
+                if country in name:
+                    country_code = alpha_2[name]
+                    break
 
         if not country_code:
             raise Exception(f'Не удалось определить код страны: {country}')
@@ -37,6 +46,7 @@ def weather_info(message, bot=None):
         r_2 = requests.get(f'https://api.openweathermap.org/data/2.5/onecall?lat={coor[0]}&lon={coor[1]}&exclude=minutely,hourly,alerts&units=metric&lang=ru&appid={WEATHER_KEY}')
         result = create_weather_string(json.loads(r_2.content), city)
 
+        user.location = json.dumps({'city': city, 'code': country_code})
         bot.send_message(message.chat.id, result)
     except Exception as e:
         logger.error(e)
