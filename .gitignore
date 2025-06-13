@@ -2,5 +2,6 @@
 .vscode/*
 __pycache__
 logs/*
-auth.py
-test.py
+*.env
+*.db
+.DS_Store

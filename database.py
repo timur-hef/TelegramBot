@@ -1,20 +1,21 @@
 import logging
-import sqlalchemy as sa
-
+import os
 from functools import wraps
 
-from auth import DATABASE
-from sqlalchemy.orm import declarative_base, Session, sessionmaker
+import sqlalchemy as sa
+from dotenv import load_dotenv
+from sqlalchemy.orm import Session, declarative_base, sessionmaker
 
-logger = logging.getLogger('utils')
+logger = logging.getLogger("utils")
 
 Base = declarative_base()
 
 
 def init_db():
-    global engine, Session    
-    
-    engine = sa.create_engine(DATABASE)  # change to localhost
+    global engine, Session
+    load_dotenv()
+    STORAGE_URL = os.getenv("STORAGE_URL")
+    engine = sa.create_engine(STORAGE_URL, echo=True)  # change to localhost
     Session = sessionmaker(engine)
     Base.metadata.create_all(engine)
 
@@ -32,14 +33,16 @@ def provide_session(func):
 
 
 class User(Base):
-    __tablename__ = 'user_info'
+    __tablename__ = "user_info"
 
     id = sa.Column(sa.Integer, primary_key=True)
     location = sa.Column(sa.String(100))
     horo_sign = sa.Column(sa.String(20))
 
     def __repr__(self):
-        return f"User(id={self.id}, location={self.location}, horo_sign={self.horo_sign})"
+        return (
+            f"User(id={self.id}, location={self.location}, horo_sign={self.horo_sign})"
+        )
 
 
 @provide_session
@@ -48,14 +51,14 @@ def update_user(user_id, session=None, location=None, horo=None):
 
     if not user:
         user = User(id=user_id, location=location, horo_sign=horo)
-        logger.info(f'Пользователь ({user_id}) успешно добавлен')
+        logger.info(f"Пользователь ({user_id}) успешно добавлен")
         return
 
     user.location = location if location else user.location
     user.horo_sign = horo if horo else user.horo_sign
 
     session.merge(user)
-    logger.info(f'Информация пользователя ({user_id}) успешно обновлена')
+    logger.info(f"Информация пользователя ({user_id}) успешно обновлена")
 
     return
 
@@ -65,13 +68,12 @@ def delete_user(user_id, session=None):
     user = session.query(User).filter(User.id == user_id).first()
 
     if not user:
-        logger.error(f'Не удалось найти юзера id = {user_id}')
+        logger.error(f"Не удалось найти юзера id = {user_id}")
     else:
         session.delete(user)
-        logger.info(f'Информация пользователя {user_id} успешно удалена')
+        logger.info(f"Информация пользователя {user_id} успешно удалена")
 
     return
-
 
 
 # init_db()
