@@ -40,25 +40,23 @@ class User(Base):
     horo_sign = sa.Column(sa.String(20))
 
     def __repr__(self):
-        return (
-            f"User(id={self.id}, location={self.location}, horo_sign={self.horo_sign})"
-        )
+        return f"User(id={self.id}, location={self.location}, horo_sign={self.horo_sign})"
 
 
 @provide_session
-def update_user(user_id, session=None, location=None, horo=None):
+def update_user(user_id: str, session: sa.orm.session.Session = None, location=None, horo_sign=None):
     user = session.query(User).filter(User.id == user_id).first()
 
     if not user:
-        user = User(id=user_id, location=location, horo_sign=horo)
+        user = User(id=user_id, location=location, horo_sign=horo_sign)
         logger.info(f"Пользователь ({user_id}) успешно добавлен")
         return
 
     user.location = location if location else user.location
-    user.horo_sign = horo if horo else user.horo_sign
+    user.horo_sign = horo_sign if horo_sign else user.horo_sign
 
     session.merge(user)
-    logger.info(f"Информация пользователя ({user_id}) успешно обновлена")
+    logger.info(f"Информация пользователя успешно обновлена: {user}")
 
     return
 

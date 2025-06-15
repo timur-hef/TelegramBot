@@ -1,10 +1,15 @@
 import logging
 import re
+import typing as tp
+from functools import wraps
 
 import requests
+import telebot
 from bs4 import BeautifulSoup
 
-ERROR_MESSAGE = "Что-то пошло не так...🙃"
+from telebot_init import bot
+
+ERROR_MESSAGE = "Something wrong...🙃"
 
 logger = logging.getLogger("utils")
 
@@ -59,6 +64,20 @@ def translate(text):
         raise Exception
 
     return result
+
+
+def error_handler(func):
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        try:
+            obj: tp.Union[telebot.types.Message, telebot.types.CallbackQuery] = args[0]
+            logger.info(f"handler object: {obj}")
+            func(*args, **kwargs)
+        except Exception as e:
+            logger.error(e)
+            bot.send_message(obj.from_user.id, ERROR_MESSAGE)
+
+    return wrapper
 
 
 alpha_2 = {
