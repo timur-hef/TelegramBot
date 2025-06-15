@@ -13,16 +13,14 @@ LOGGING_CONFIG: Dict[str, Any] = {
     "version": 1,
     "disable_existing_loggers": False,
     "formatters": {
-        "default": {
-            "format": "[%(asctime)s] {%(filename)s:%(lineno)d} %(levelname)s - %(message)s"
-        },
+        "default": {"format": "[%(asctime)s] {%(filename)s:%(lineno)d} %(levelname)s - %(message)s"},
     },
     "handlers": {
         "console": {
             "class": "logging.StreamHandler",
             "formatter": "default",
             "stream": sys.stdout,
-            "level": "INFO",
+            "level": "ERROR",
         },
         "file": {
             "class": "logging.handlers.TimedRotatingFileHandler",
@@ -36,7 +34,7 @@ LOGGING_CONFIG: Dict[str, Any] = {
     },
     "loggers": {
         "main_bot_logger": {
-            "handlers": ["console", "file"],
+            "handlers": ["file"],
             "propagate": False,
         },
         "utils": {
@@ -45,7 +43,7 @@ LOGGING_CONFIG: Dict[str, Any] = {
         },
     },
     "root": {
-        "handlers": ["console"],
-        "level": "INFO",
+        "handlers": ["file"],
+        "level": "DEBUG",
     },
 }
