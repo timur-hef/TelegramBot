@@ -2,10 +2,6 @@ import os
 import sys
 from typing import Any, Dict
 
-from dotenv import load_dotenv
-
-load_dotenv()
-
 TG_BOT_LOG_FOLDER = os.getenv("TG_BOT_LOG_FOLDER")
 
 

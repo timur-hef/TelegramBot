@@ -1,5 +1,4 @@
 import logging
-import os
 from logging.config import dictConfig
 
 import requests
@@ -9,11 +8,11 @@ from telebot_init import bot
 
 logger = logging.getLogger("main_bot_logger")
 
-from conf import LOGGING_CONFIG
 from database import *
+from log_conf import LOGGING_CONFIG
 from models.horoscope import DATES, MAP_PERIOD_DATA, SIGNS
 from stonks import stock_info
-from utils import ERROR_MESSAGE, error_handler
+from utils import error_handler
 
 dictConfig(LOGGING_CONFIG)
 logger = logging.getLogger("main_bot_logger")
